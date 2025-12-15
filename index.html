@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Vertex — Planner Dashboard</title>
+<style>
+/* ---------- THEME VARIABLES ---------- */
+:root{
+  --bg:#eef4ff; --panel:rgba(255,255,255,0.85); --card:#ffffff; --text:#0b1220; --muted:#51607a; --accent:#316dff; --accent-2:#8b5cf6; --glass: rgba(255,255,255,0.6); --radius:14px; --shadow:0 8px 26px rgba(16,24,40,0.08);
+}
+html[data-theme='dark']{
+  --bg:#071026; --panel:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); --card:#0b1220; --text:#e6eef8; --muted:#9aa6b2; --accent:#5aa7ff; --accent-2:#8b5cf6; --glass: rgba(255,255,255,0.03); --shadow: 0 10px 30px rgba(2,6,23,0.6);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Segoe UI,Roboto,system-ui,Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+.app{max-width:1200px;margin:20px auto;padding:18px}
+.layout{display:grid;grid-template-columns:260px 1fr;gap:18px}
+/* Sidebar - Glass style (chosen) */
+.sidebar{background:linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06));backdrop-filter:blur(8px);padding:14px;border-radius:12px;box-shadow:var(--shadow);height:calc(100vh - 80px);position:sticky;top:20px;overflow:auto;border:1px solid rgba(255,255,255,0.06)}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.logo{width:48px;height:48px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;padding:6px}
+.logo img{width:100%;height:100%;object-fit:contain;border-radius:8px}
+.brand h2{margin:0;font-size:18px}
+.muted{color:var(--muted);font-size:13px}
+.nav{margin-top:16px;display:flex;flex-direction:column;gap:6px}
+.nav button{background:transparent;border:0;padding:10px;border-radius:10px;text-align:left;cursor:pointer;font-weight:600;color:var(--text)}
+.nav button.active{background:linear-gradient(90deg, rgba(49,109,255,0.12), rgba(139,92,246,0.06));}
+.sep{height:1px;background:rgba(0,0,0,0.06);margin:12px 0;border-radius:4px}
+/* Main */
+.header{display:flex;align-items:center;gap:12px;justify-content:space-between}
+.header-left{display:flex;align-items:center;gap:12px}
+.searchbar{display:flex;gap:8px;align-items:center;background:var(--card);padding:8px;border-radius:12px;border:1px solid rgba(0,0,0,0.06)}
+.searchbar input{border:0;background:transparent;outline:none;width:320px;color:var(--text)}
+.header-right{display:flex;align-items:center;gap:8px}
+.icon-btn{background:transparent;border:0;padding:8px;border-radius:10px;cursor:pointer}
+.btn{background:var(--accent);color:white;border:none;padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:600}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid rgba(0,0,0,0.06)}
+.overview{display:flex;gap:12px;margin-top:14px}
+.box{flex:1;padding:14px;border-radius:12px;background:var(--card);box-shadow:var(--shadow)}
+.box h3{margin:0;font-size:14px}
+.box p{margin:6px 0 0;color:var(--muted)}
+.main-grid{display:grid;grid-template-columns:1fr 360px;gap:18px;margin-top:18px}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.card{background:var(--card);padding:12px;border-radius:12px;border:1px solid rgba(0,0,0,0.04);box-shadow:var(--shadow)}
+.card h4{margin:0}
+.card .meta{font-size:12px;color:var(--muted);margin-top:8px}
+.tag{display:inline-block;padding:6px 8px;border-radius:999px;font-size:12px;margin-right:6px;margin-top:8px;background:rgba(49,109,255,0.08);}
+.right-panel{display:flex;flex-direction:column;gap:12px}
+.panel{background:var(--card);padding:12px;border-radius:12px;box-shadow:var(--shadow)}
+.small-list{display:flex;flex-direction:column;gap:8px}
+.small-list .item{display:flex;align-items:center;justify-content:space-between}
+/* Floating quick add button */
+.quick-fab{position:fixed;right:22px;bottom:22px;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--accent);color:#fff;box-shadow:0 8px 24px rgba(49,109,255,0.2);cursor:pointer;border:0;font-size:22px}
+.quick-panel{position:fixed;right:22px;bottom:96px;width:420px;max-width:calc(100% - 40px);background:var(--card);padding:12px;border-radius:12px;box-shadow:var(--shadow);transform-origin:bottom right;display:none}
+.quick-panel.open{display:block}
+.quick-panel label{font-size:13px;color:var(--muted);display:block;margin-top:8px}
+.quick-panel input[type=text],.quick-panel textarea,.quick-panel select{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);margin-top:6px;background:transparent;color:var(--text)}
+.quick-panel textarea{min-height:80px}
+.img-preview{max-height:120px;border-radius:8px;margin-top:8px;display:block}
+/* Modals (auth kept minimal) */
+.modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,0.5);backdrop-filter:blur(6px);z-index:60}
+.modal.open{display:flex}
+.modal-panel{width:95%;max-width:560px;background:var(--card);padding:18px;border-radius:14px;box-shadow:var(--shadow)}
+label{font-size:13px;color:var(--muted);display:block;margin-top:8px}
+input[type=text],input[type=password],textarea,select{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(0,0,0,0.06);margin-top:6px;background:transparent;color:var(--text)}
+textarea{min-height:100px}
+.color-input{height:36px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);padding:6px}
+/* responsive */
+@media(max-width:980px){.layout{grid-template-columns:1fr}.sidebar{position:relative;height:auto}.main-grid{grid-template-columns:1fr}.searchbar input{width:160px}.quick-panel{right:12px;left:12px;max-width:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="layout">
+    <!-- SIDEBAR (glass style) -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo"><img src="/mnt/data/fdaa1a52-9275-48da-96df-37c50719745d.png" alt="Vertex"></div>
+        <div>
+          <h2>Vertex</h2>
+          <div class="muted">Your Life. Organized.</div>
+        </div>
+      </div>
+
+      <div class="nav" role="navigation">
+        <button data-view="dashboard" class="active">Dashboard</button>
+        <button data-view="all">All Plans</button>
+        <button data-view="categories">Categories</button>
+        <button data-view="themes">Themes</button>
+        <button data-view="settings">Settings</button>
+        <div class="sep"></div>
+        <div style="display:flex;gap:8px;align-items:center;justify-content:space-between;padding-top:8px">
+          <div class="muted">Theme</div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <button id="toggleBaseTheme" class="btn ghost">Light / Dark</button>
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center;justify-content:space-between">
+          <div id="userInfoSmall" class="muted">Not logged in</div>
+          <button id="authBtnSmall" class="btn ghost">Login</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main>
+      <div class="header">
+        <div class="header-left">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="display:flex;flex-direction:column">
+              <div style="font-weight:700;font-size:18px">Vertex</div>
+              <div class="muted" style="font-size:13px">All plans — one list</div>
+            </div>
+          </div>
+          <div style="width:12px"></div>
+          <div class="searchbar">
+            <input id="searchInput" placeholder="Search plans, tags, descriptions..." />
+            <select id="filterCategory"><option value="">All categories</option></select>
+          </div>
+        </div>
+        <div class="header-right">
+          <div id="userInfo" class="muted">Not logged in</div>
+          <button id="authBtn" class="btn ghost">Login / Register</button>
+        </div>
+      </div>
+
+      <div class="overview">
+        <div class="box"><h3 id="todayCount">Today's Plans</h3><p id="todayCountSub">0 tasks for today</p></div>
+        <div class="box"><h3 id="pinnedCount">Pinned</h3><p id="pinnedCountSub">0 pinned</p></div>
+        <div class="box"><h3 id="upcomingCount">Upcoming</h3><p id="upcomingCountSub">0 plans</p></div>
+      </div>
+
+      <div class="main-grid">
+        <section>
+          <div class="panel" style="margin-bottom:12px">
+            <h4>🔔 Upcoming Reminders</h4>
+            <div id="reminderList" class="small-list"></div>
+          </div>
+
+          <div id="cards" class="card-grid"></div>
+        </section>
+
+        <aside class="right-panel">
+          <div class="panel">
+            <h4>Quick Filters</h4>
+            <label>Tags</label>
+            <input id="tagFilter" type="text" placeholder="comma separated tags to filter" />
+            <label style="margin-top:8px">Search in description</label>
+            <input id="descFilter" type="text" placeholder="keywords..." />
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+              <button id="applyFilters" class="btn ghost">Apply</button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h4>Themes</h4>
+            <label>Primary color (custom)</label>
+            <input id="colorPicker" class="color-input" type="color" value="#316dff" />
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+              <button id="applyColor" class="btn">Apply</button>
+            </div>
+            <div class="muted" style="margin-top:8px">Pick a primary color. Use base toggle for light/dark.</div>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div id="authModal" class="modal" aria-hidden>
+  <div class="modal-panel">
+    <h3 id="authTitle">Login or Register</h3>
+    <label>Username</label>
+    <input id="authUser" type="text" />
+    <label>Password</label>
+    <input id="authPass" type="password" />
+    <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
+      <button id="loginAction" class="btn">Login</button>
+      <button id="registerAction" class="btn ghost">Register</button>
+      <button id="closeAuth" class="btn ghost">Close</button>
+    </div>
+    <div style="margin-top:10px" class="muted">Passwords are hashed client-side using SHA-256 and saved per user.</div>
+  </div>
+</div>
+
+<!-- QUICK ADD PANEL (floating) -->
+<button id="quickFab" class="quick-fab">+</button>
+<div id="quickPanel" class="quick-panel" aria-hidden>
+  <h4>Quick Add Plan</h4>
+  <label>Title</label>
+  <input id="quickTitle" type="text" />
+  <label>Description</label>
+  <textarea id="quickDesc"></textarea>
+  <label>Category</label>
+  <input id="quickCategory" type="text" placeholder="e.g. personal, project, errands" />
+  <label>Tags (comma separated)</label>
+  <input id="quickTags" type="text" placeholder="work,urgent" />
+  <label>Due (YYYY/MM/DD HH:MM)</label>
+  <input id="quickDue" type="text" placeholder="2025/09/14 14:00" maxlength="16" />
+  <label>Reminder</label>
+  <div style="display:flex;gap:8px;align-items:center">
+    <input id="quickReminder" type="checkbox" /> <div class="muted">Enable reminder</div>
+  </div>
+  <label>Image</label>
+  <input id="quickImg" type="file" accept="image/*" />
+  <img id="quickImgPreview" class="img-preview" style="display:none" />
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+    <button id="quickAdd" class="btn">Add Plan</button>
+    <button id="quickClose" class="btn ghost">Close</button>
+  </div>
+</div>
+
+<script>
+/* helpers */
+const $ = id => document.getElementById(id);
+const uid = ()=> 'p_'+Math.random().toString(36).slice(2,9);
+let current={user:null};
+function saveUsers(u){localStorage.setItem('v_users',JSON.stringify(u));}
+function loadUsers(){return JSON.parse(localStorage.getItem('v_users')||'{}');}
+function savePlans(user,p){localStorage.setItem('v_plans_'+user,JSON.stringify(p));}
+function loadPlans(user){return JSON.parse(localStorage.getItem('v_plans_'+user)||'{}');}
+async function hash(text){const u=new TextEncoder().encode(text);const h=await crypto.subtle.digest('SHA-256',u);return Array.from(new Uint8Array(h)).map(x=>x.toString(16).padStart(2,'0')).join('');}
+function setThemeBase(t){document.documentElement.setAttribute('data-theme',t);localStorage.setItem('v_theme_base',t);} 
+(function(){ setThemeBase(localStorage.getItem('v_theme_base')||'light'); document.documentElement.style.setProperty('--accent', localStorage.getItem('v_accent')||'#316dff'); document.documentElement.style.setProperty('--accent-2', localStorage.getItem('v_accent_2')||'#8b5cf6'); })();
+/* theme color helpers */
+function hexToHsl(hex){hex=hex.replace('#','');let r=parseInt(hex.substring(0,2),16)/255,g=parseInt(hex.substring(2,4),16)/255,b=parseInt(hex.substring(4,6),16)/255;const max=Math.max(r,g,b),min=Math.min(r,g,b);let h,s,l=(max+min)/2; if(max==min){h=s=0;} else{const d=max-min; s=l>0.5?d/(2-max-min):d/(max+min); switch(max){case r:h=(g-b)/d + (g<b?6:0);break;case g:h=(b-r)/d + 2;break;case b:h=(r-g)/d + 4;break;} h/=6;} return {h:Math.round(h*360),s:Math.round(s*100),l:Math.round(l*100)} }
+function hslToHex(h,s,l){s/=100;l/=100;const a=s*Math.min(l,1-l); const f=n=>{const k=(n+ h/30)%12; const color=l - a*Math.max(Math.min(k-3,9-k,1),-1); return Math.round(255*color).toString(16).padStart(2,'0');}; return `#${f(0)}${f(8)}${f(4)}` }
+function applyAccent(hex){ const hsl=hexToHsl(hex); const h=(hsl.h+40)%360; const accent2=hslToHex(h,hsl.s,Math.max(30,hsl.l-10)); document.documentElement.style.setProperty('--accent',hex); document.documentElement.style.setProperty('--accent-2',accent2); localStorage.setItem('v_accent',hex); localStorage.setItem('v_accent_2',accent2); }
+/* load saved */
+$('applyColor').onclick=()=>{applyAccent($('colorPicker').value); alert('Primary color applied');}
+$('toggleBaseTheme').onclick=()=>{ setThemeBase(document.documentElement.getAttribute('data-theme')==='light'?'dark':'light'); }
+/* auth */
+$('authBtn').onclick=()=>openModal('authModal');$('authBtnSmall').onclick=()=>openModal('authModal');$('closeAuth').onclick=()=>closeModal('authModal');
+$('loginAction').onclick=async ()=>{const user=$('authUser').value.trim();const pass=$('authPass').value; if(!user||!pass) return alert('Enter both fields'); const users=loadUsers(); const h=await hash(pass); if(users[user] && users[user].passwordHash===h){current.user=user;current.plans=loadPlans(user);closeModal('authModal');renderUI();alert('Logged in');} else alert('Invalid credentials');};
+$('registerAction').onclick=async ()=>{const user=$('authUser').value.trim();const pass=$('authPass').value; if(!user||!pass) return alert('Enter both fields'); const users=loadUsers(); if(users[user]) return alert('User exists'); const h=await hash(pass); users[user]={passwordHash:h,created:new Date().toISOString()}; saveUsers(users); current.user=user; current.plans={}; savePlans(user,{}); closeModal('authModal'); renderUI(); alert('Registered and logged in');};
+function openModal(id){$(id).classList.add('open');$(id).setAttribute('aria-hidden','false');}
+function closeModal(id){$(id).classList.remove('open');$(id).setAttribute('aria-hidden','true');}
+/* image preview for quick add */
+$('quickImg').onchange=e=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>{ $('quickImgPreview').src=ev.target.result; $('quickImgPreview').style.display='block'; }; r.readAsDataURL(f); }
+/* Quick add panel open/close */
+$('quickFab').onclick=()=>{ const p=$('quickPanel'); p.classList.toggle('open'); if(p.classList.contains('open')) p.style.display='block'; else p.style.display='none'; }
+$('quickClose').onclick=()=>{ $('quickPanel').classList.remove('open'); $('quickPanel').style.display='none'; }
+/* Date/time auto-format for YYYY/MM/DD HH:MM */
+function autoFormatDateInput(el){ el.addEventListener('input',e=>{ let v=el.value.replace(/[^0-9]/g,''); // digits only
+ if(v.length>12) v=v.slice(0,12);
+ let out=''; if(v.length>=4){ out+=v.slice(0,4); } else { out+=v; el.value=out; return; }
+ if(v.length>=6){ out+='/'+v.slice(4,6);} else if(v.length>4){ out+='/'+v.slice(4); el.value=out; return; }
+ if(v.length>=8){ out+='/'+v.slice(6,8);} else if(v.length>6){ out+='/'+v.slice(6); el.value=out; return; }
+ if(v.length>=10){ out+=' '+v.slice(8,10);} else if(v.length>8){ out+=' '+v.slice(8); el.value=out; return; }
+ if(v.length>=12){ out+=':'+v.slice(10,12);} else if(v.length>10){ out+=':'+v.slice(10); el.value=out; return; }
+ el.value=out; });
+}
+autoFormatDateInput($('quickDue'));
+/* Core data handling */
+let editingId=null;
+function saveAndRender(){ if(!current.user) return; savePlans(current.user,current.plans); renderUI(); }
+/* Quick add saves plan */
+$('quickAdd').onclick=()=>{ if(!current.user) return alert('Login first'); const title=$('quickTitle').value.trim(); if(!title) return alert('Title required'); const desc=$('quickDesc').value.trim(); const cat=$('quickCategory').value.trim(); const tags=$('quickTags').value.split(',').map(s=>s.trim()).filter(Boolean); const dueRaw=$('quickDue').value.trim(); const due = dueRaw? dueRaw : null; const reminder=$('quickReminder').checked; const img=$('quickImgPreview').src && $('quickImgPreview').style.display!=='none'?$('quickImgPreview').src:null; const plans=current.plans||{}; const id=uid(); plans[id]={id,title,desc,category:cat,tags,due,reminder,img,pinned:false,created:new Date().toISOString(),updated:new Date().toISOString()}; current.plans=plans; saveAndRender(); // reset
+ $('quickTitle').value=''; $('quickDesc').value=''; $('quickCategory').value=''; $('quickTags').value=''; $('quickDue').value=''; $('quickReminder').checked=false; $('quickImg').value=''; $('quickImgPreview').style.display='none'; $('quickPanel').classList.remove('open'); $('quickPanel').style.display='none'; }
+/* Rendering UI */
+const cards=$('cards'); const searchInput=$('searchInput'); const filterCategory=$('filterCategory'); const tagFilter=$('tagFilter'); const descFilter=$('descFilter');
+function renderUI(){ $('userInfo').innerText=current.user?current.user:'Not logged in'; $('userInfoSmall').innerText=current.user?('User: '+current.user):'Not logged in'; $('authBtn').innerText=current.user?'Logout':'Login / Register'; $('authBtnSmall').innerText=current.user?'Logout':'Login'; if(current.user){ $('authBtn').onclick=()=>{ if(confirm('Logout?')){ current.user=null; current.plans=null; renderUI(); } }; $('authBtnSmall').onclick=()=>{ if(confirm('Logout?')){ current.user=null; current.plans=null; renderUI(); } }; } else { $('authBtn').onclick=()=>openModal('authModal'); $('authBtnSmall').onclick=()=>openModal('authModal'); }
+ // categories
+ filterCategory.innerHTML='<option value="">All categories</option>';
+ const catSet=new Set(); const tagSet=new Set(); if(current.plans) for(const k in current.plans){ const p=current.plans[k]; if(p.category) catSet.add(p.category); (p.tags||[]).forEach(t=>tagSet.add(t)); }
+ [...catSet].sort().forEach(c=>{ const opt=document.createElement('option'); opt.value=c; opt.textContent=c; filterCategory.appendChild(opt); });
+ cards.innerHTML=''; if(!current.plans) return; // counts
+ const arr=Object.values(current.plans).sort((a,b)=>{ if(a.pinned!==b.pinned) return a.pinned?-1:1; return new Date(b.updated)-new Date(a.updated); }); const q=(searchInput.value||'').toLowerCase(); const selCat=filterCategory.value; const tagQ=(tagFilter?tagFilter.value:'').toLowerCase(); const descQ=(descFilter?descFilter.value:'').toLowerCase(); let todayCount=0; let pinnedCount=0; let upcomingCount=0;
+ arr.filter(p=>{ if(selCat && (p.category||'')!==selCat) return false; if(tagQ){ const tags=(p.tags||[]).join(' ').toLowerCase(); if(!tags.includes(tagQ)) return false; } if(descQ && !(p.desc||'').toLowerCase().includes(descQ)) return false; if(!q) return true; return p.title.toLowerCase().includes(q) || (p.desc||'').toLowerCase().includes(q) || (p.tags||[]).join(' ').toLowerCase().includes(q); }).forEach(p=>{ if(p.pinned) pinnedCount++; if(p.due) upcomingCount++; if(p.due){ const dd=new Date(p.due.replace(/\s/,'T')); const now=new Date(); if(!isNaN(dd.getTime()) && dd.toDateString()===now.toDateString()) todayCount++; }
+ const card=document.createElement('div'); card.className='card'; card.draggable=true; card.dataset.id=p.id; card.innerHTML=`<h4>${escapeHtml(p.title)} ${p.pinned?'<span style="color:var(--accent);font-weight:700">★</span>':''}</h4><div class='meta'>${p.category?'<span class="muted">'+escapeHtml(p.category)+'</span> • ':''}${(p.tags||[]).map(t=>'<span class="tag">#'+escapeHtml(t)+'</span>').join(' ')} • ${p.due?escapeHtml(p.due):'No due'}</div><p>${escapeHtml(p.desc||'')}</p>`;
+ const act=document.createElement('div'); act.style.marginTop='10px'; act.style.display='flex'; act.style.gap='8px'; const btnEdit=document.createElement('button'); btnEdit.className='btn ghost'; btnEdit.textContent='Edit'; btnEdit.onclick=()=>{ editingId=p.id; // populate quick panel for edit
+ $('quickTitle').value=p.title; $('quickDesc').value=p.desc||''; $('quickCategory').value=p.category||''; $('quickTags').value=(p.tags||[]).join(', '); $('quickDue').value=p.due||''; $('quickReminder').checked=!!p.reminder; if(p.img){ $('quickImgPreview').src=p.img; $('quickImgPreview').style.display='block'; } else {$('quickImgPreview').style.display='none';}
+ $('quickPanel').classList.add('open'); $('quickPanel').style.display='block'; }
+ const btnDelete=document.createElement('button'); btnDelete.className='btn ghost'; btnDelete.textContent='Delete'; btnDelete.onclick=()=>{ if(confirm('Delete?')){ delete current.plans[p.id]; saveAndRender(); } };
+ const btnPin=document.createElement('button'); btnPin.className='btn ghost'; btnPin.textContent=p.pinned?'Unpin':'Pin'; btnPin.onclick=()=>{ p.pinned=!p.pinned; p.updated=new Date().toISOString(); saveAndRender(); };
+ act.appendChild(btnEdit); act.appendChild(btnDelete); act.appendChild(btnPin); card.appendChild(act);
+ // image
+ if(p.img){ const img=document.createElement('img'); img.src=p.img; img.style.width='100%'; img.style.borderRadius='8px'; img.style.marginTop='10px'; card.appendChild(img); }
+ // drag events
+ card.addEventListener('dragstart',e=>{ card.classList.add('dragging'); e.dataTransfer.setData('text/plain',p.id); });
+ card.addEventListener('dragend',e=>{ card.classList.remove('dragging'); saveAndRender(); });
+ card.addEventListener('dragover',e=>{ e.preventDefault(); const after=getDragAfterElement(cards,e.clientY); const dragging=document.querySelector('.dragging'); if(after==null) cards.appendChild(dragging); else cards.insertBefore(dragging,after); });
+ cards.appendChild(card);
+ });
+ $('todayCount').innerText=`Today's Plans (${todayCount})`; $('todayCountSub').innerText=`${todayCount} tasks for today`; $('pinnedCount').innerText=`Pinned (${pinnedCount})`; $('pinnedCountSub').innerText=`${pinnedCount} pinned`; $('upcomingCount').innerText=`Upcoming (${upcomingCount})`; $('upcomingCountSub').innerText=`${upcomingCount} plans`;
+ // reminders list
+ renderReminders(); }
+function getDragAfterElement(container,y){ const draggableElements=[...container.querySelectorAll('.card:not(.dragging)')]; return draggableElements.reduce((closest,child)=>{ const box=child.getBoundingClientRect(); const offset=y-box.top-box.height/2; if(offset<0 && offset>closest.offset) return {offset:offset,element:child}; else return closest; },{offset:Number.NEGATIVE_INFINITY}).element; }
+searchInput.oninput=()=>renderUI(); filterCategory.onchange=()=>renderUI(); document.getElementById('applyFilters').onclick=()=>renderUI();
+function escapeHtml(s){ if(!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+(function(){ current.user=null; current.plans=null; renderUI(); const t=localStorage.getItem('v_theme_base'); if(t) document.documentElement.setAttribute('data-theme',t); const a=localStorage.getItem('v_accent'); if(a) document.documentElement.style.setProperty('--accent',a); const a2=localStorage.getItem('v_accent_2'); if(a2) document.documentElement.style.setProperty('--accent-2',a2); })();
+// Drop order save
+cards.addEventListener('drop',e=>{ e.preventDefault(); if(!current.user||!current.plans) return; const newOrder={}; [...cards.children].forEach(child=>{ const id=child.dataset.id; if(id && current.plans[id]) newOrder[id]=current.plans[id]; }); current.plans=newOrder; saveAndRender(); });
+cards.addEventListener('dragover',e=>e.preventDefault());
+/* Reminder rendering */
+function renderReminders(){ const list=$('reminderList'); list.innerHTML=''; if(!current.plans) return; const arr=Object.values(current.plans).filter(p=>p.reminder && p.due).slice(); arr.sort((a,b)=>new Date(a.due)-new Date(b.due)); arr.slice(0,6).forEach(p=>{ const item=document.createElement('div'); item.className='item'; const left=document.createElement('div'); left.innerHTML=`<div style=\"font-weight:700\">${escapeHtml(p.title)}</div><div class=\"muted\">${escapeHtml(p.due)}</div>`; const right=document.createElement('div'); right.innerHTML=`<button class=\"btn ghost\">Snooze</button>`; item.appendChild(left); item.appendChild(right); list.appendChild(item); }); if(list.children.length===0) list.innerHTML='<div class="muted">No upcoming reminders</div>'; }
+// quick edit/save when quick panel is used to edit existing item
+$('quickAdd').addEventListener('click',()=>{ if(!current.user) return alert('Login first'); if(editingId){ // update existing
+ const p=current.plans[editingId]; p.title=$('quickTitle').value.trim(); p.desc=$('quickDesc').value.trim(); p.category=$('quickCategory').value.trim(); p.tags=$('quickTags').value.split(',').map(s=>s.trim()).filter(Boolean); p.due=$('quickDue').value.trim()||null; p.reminder=$('quickReminder').checked; p.img=$('quickImgPreview').src && $('quickImgPreview').style.display!=='none'?$('quickImgPreview').src:null; p.updated=new Date().toISOString(); saveAndRender(); editingId=null; $('quickPanel').classList.remove('open'); $('quickPanel').style.display='none'; } });
+</script>
+</body>
+</html>
